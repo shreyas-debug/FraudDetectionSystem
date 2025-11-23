@@ -10,18 +10,23 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _config;
     private readonly string _inputTopic = "transactions";
     private readonly string _dlqTopic = "transactions-dlq"; // The safety net
     private readonly string _bootstrapServers = "localhost:9092";
 
-    public Worker(ILogger<Worker> logger, IHttpClientFactory httpClientFactory)
+    public Worker(ILogger<Worker> logger, IHttpClientFactory httpClientFactory,IConfiguration config)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _config = config;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Get Kafka URL from config, default to localhost if missing
+        var _bootstrapServers = _config["Kafka:BootstrapServers"] ?? "localhost:9092";
+
         // 1. CONSUMER CONFIG
         var consumerConfig = new ConsumerConfig
         {

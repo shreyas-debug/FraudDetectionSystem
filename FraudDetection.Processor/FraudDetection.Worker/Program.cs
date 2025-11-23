@@ -16,9 +16,12 @@ var circuitBreakerPolicy = HttpPolicyExtensions
     );
 
 // Register the Client WITH the policy
+// Read API URL from Config, default to localhost if missing
+var apiUrl = builder.Configuration["ApiUrl"] ?? "http://localhost:5000";
+
 builder.Services.AddHttpClient("FraudService", client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5000"); 
+    client.BaseAddress = new Uri(apiUrl); 
 })
 .AddPolicyHandler(circuitBreakerPolicy);
 
