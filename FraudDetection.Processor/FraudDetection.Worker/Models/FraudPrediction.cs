@@ -11,5 +11,5 @@ public class FraudPrediction
     public double RiskScore { get; set; }
 
     [JsonPropertyName("Reason")]
-    public string Reason { get; set; }
+    public string? Reason { get; set; }
 }
