@@ -18,32 +18,40 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      # IMPORTANT: 
-      # - localhost:9092 is for YOU (external)
-      # - kafka:29092 is for the .NET App (internal)
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
-  # The Python Brain
+  # Python ML Service
   mlapi:
     build: 
       context: ./FraudDetection.MLApi
     container_name: mlapi
     ports:
-      - "5000:5000"
+      - "8000:5000" # Mapped to 8000 to avoid conflict
 
-  # The .NET Muscle
-  processor:
+  # .NET Backend API
+  backend-api:
     build:
+      # FIX: Point to the parent folder containing the API
       context: ./FraudDetection.Processor
-      dockerfile: Dockerfile
-    container_name: processor
+      # FIX: Point to the Dockerfile inside the API folder
+      dockerfile: FraudDetection.API/Dockerfile
+    container_name: backend-api
     depends_on:
       - kafka
       - mlapi
+    ports:
+      - "5000:8080"
     environment:
-      # Overriding the C# settings here!
       - Kafka__BootstrapServers=kafka:29092
       - ApiUrl=http://mlapi:5000
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./FraudDetection.Web
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend-api
